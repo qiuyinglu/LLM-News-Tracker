@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM News Thread Viewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-newspaper"></i> LLM News Thread Viewer</h1>
+        </header>
+
+        <div class="controls">
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="status-filter">Filter by Status:</label>
+                    <select id="status-filter" onchange="applyFilters()">
+                        <option value="">All Statuses</option>
+                        {% for status, count in status_counts.items() %}
+                        <option value="{{ status }}" {% if current_status_filter == status %}selected{% endif %}>
+                            {{ status.title() }} ({{ count }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sort-by">Sort by:</label>
+                    <select id="sort-by" onchange="applyFilters()">
+                        <option value="created_at" {% if current_sort_by == 'created_at' %}selected{% endif %}>Created Date</option>
+                        <option value="updated_at" {% if current_sort_by == 'updated_at' %}selected{% endif %}>Updated Date</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sort-order">Order:</label>
+                    <select id="sort-order" onchange="applyFilters()">
+                        <option value="desc" {% if current_sort_order == 'desc' %}selected{% endif %}>Newest First</option>
+                        <option value="asc" {% if current_sort_order == 'asc' %}selected{% endif %}>Oldest First</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="threads-container" id="threads-container">
+            {% if threads %}
+                {% for thread in threads %}
+                <div class="thread-card">
+                    <div class="thread-header">
+                        <h2 class="thread-title">{{ thread.llm_title }}</h2>
+                        <div class="thread-meta">
+                            <span class="status status-{{ thread.status.replace(' ', '-') }}">
+                                {{ thread.status.title() }}
+                            </span>
+                            <span class="category">{{ thread.category.title() }}</span>
+                            <span class="location">{{ thread.country.upper() }} | {{ thread.language.upper() }}</span>
+                        </div>
+                    </div>
+
+                    <div class="thread-summary">
+                        <p>{{ thread.llm_summary }}</p>
+                    </div>
+
+                    <div class="thread-news">
+                        <h4>Related News Articles ({{ thread.news|length }}):</h4>
+                        <div class="news-links">
+                            {% for news in thread.news %}
+                            <a href="{{ news.url }}" 
+                               target="_blank" 
+                               class="news-link"
+                               title="{{ news.title }}"
+                               data-similarity="{{ news.llm_similarity_score }}">
+                                {{ loop.index }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="thread-dates">
+                        <span class="created">Created: {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        <span class="updated">Updated: {{ thread.updated_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-threads">
+                    <i class="fas fa-search"></i>
+                    <p>No threads found matching your criteria.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="pagination" id="pagination">
+            {% if pagination.total_pages > 1 %}
+                <div class="pagination-info">
+                    Showing page {{ pagination.current_page }} of {{ pagination.total_pages }} 
+                    ({{ pagination.total_threads }} total threads)
+                </div>
+                
+                <div class="pagination-controls">
+                    {% if pagination.has_prev %}
+                        <a href="#" onclick="goToPage(1)" class="page-link">First</a>
+                        <a href="#" onclick="goToPage({{ pagination.prev_page }})" class="page-link">Previous</a>
+                    {% endif %}
+
+                    {% set start_page = [1, pagination.current_page - 2]|max %}
+                    {% set end_page = [pagination.total_pages, pagination.current_page + 2]|min %}
+
+                    {% for page_num in range(start_page, end_page + 1) %}
+                        {% if page_num == pagination.current_page %}
+                            <span class="page-link current">{{ page_num }}</span>
+                        {% else %}
+                            <a href="#" onclick="goToPage({{ page_num }})" class="page-link">{{ page_num }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                        <a href="#" onclick="goToPage({{ pagination.next_page }})" class="page-link">Next</a>
+                        <a href="#" onclick="goToPage({{ pagination.total_pages }})" class="page-link">Last</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer>
+        <p>Made with <i class="fas fa-heart"></i> by Qiuying, zxqdx</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
