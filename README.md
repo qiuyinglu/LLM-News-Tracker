@@ -2,6 +2,10 @@
 
 A Python application that queries the GNews API, uses LLM models to identify entities and analyze news threads, and provides a web interface for viewing the results.
 
+![demo website screenshot 1](./assets/demo-1.jpg)
+
+![demo website screenshot 2](./assets/demo-2.jpg)
+
 ## Features
 
 - **News Collection**: Fetches news from GNews API across multiple categories
